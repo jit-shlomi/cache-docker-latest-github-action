@@ -35,7 +35,7 @@ runs:
       run: |
         export DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.docker-image }} | sed -E 's/^.*@//')
         export IMAGE_NAME=$(docker image inspect --format='{{index .RepoTags 0}}' ${{ inputs.docker-image }} | cut -d':' -f1 | cut -d'/' -f2)
-        echo "::set-output name=digest::@$DIGEST"
+        echo "::set-output name=digest::$DIGEST"
         echo "::set-output name=image-name::$IMAGE_NAME"        
 
 
@@ -44,8 +44,8 @@ runs:
       uses: actions/cache@v2
       with:
         path: ${{ inputs.cache-path }}
-        key: ${{ steps.get-digest.outputs.image-name }}-${{ steps.get-digest.outputs.digest }}
-        restore-keys: ${{ steps.get-digest.outputs.image-name }}-
+        key: ${{ steps.get-digest.outputs.image-name }}@${{ steps.get-digest.outputs.digest }}
+        restore-keys: ${{ steps.get-digest.outputs.image-name }}
 
     - name: Pull latest Docker image
       id: pull-image
@@ -69,6 +69,6 @@ runs:
       uses: actions/cache@v2
       with:
         path: ${{ inputs.cache-path }}
-        key: ${{ steps.get-digest.outputs.image-name }}-${{ steps.get-digest.outputs.digest }}
-        restore-keys: ${{ steps.get-digest.outputs.image-name }}-
+        key: ${{ steps.get-digest.outputs.image-name }}@${{ steps.get-digest.outputs.digest }}
+        restore-keys: ${{ steps.get-digest.outputs.image-name }}
         expire: ${{ inputs.cache-duration }}
