@@ -34,7 +34,7 @@ runs:
       shell: bash
       run: |
         export DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.docker-image }} | sed -E 's/^.*@//')
-        export IMAGE_NAME=$(docker image inspect --format='{{index .RepoTags 0}}' ${{ inputs.docker-image }} | sed -E 's/^.*://')
+        export IMAGE_NAME=$(docker image inspect --format='{{index .RepoTags 0}}' ${{ inputs.docker-image }} | cut -d':' -f1 | cut -d'/' -f2)
         echo "::set-output name=digest::@$DIGEST"
         echo "::set-output name=image-name::$IMAGE_NAME"        
 
