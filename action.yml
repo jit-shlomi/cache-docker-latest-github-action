@@ -1,0 +1,71 @@
+name: Cache Docker images using GitHub Actions cache
+
+description: |
+  This GitHub Action caches Docker images using the GitHub Actions cache service. 
+  It downloads the latest version of the Docker image and caches it for subsequent runs.
+
+inputs:
+  image-name:
+    description: 'The name of the Docker image to cache'
+    required: true
+    default: 'docker-image'
+  cache-path:
+    description: 'The path to the directory where the Docker image should be cached'
+    required: false
+    default: 'ci/cache/docker'
+  cache-key:
+    description: 'The key used to identify the cached Docker image'
+    required: false
+    default: 'docker-image-${{ github.sha }}'
+  cache-duration:
+    description: 'The time period for which the cache should be kept'
+    required: false
+    default: '7 days'
+
+outputs:
+  cache-hit:
+    description: 'Whether the Docker image was restored from the cache'
+    value: ${{ steps.cache-docker.outputs.cache-hit }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Get Docker image digest
+      id: get-digest
+      run: |
+        export DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.image-name }})
+        echo "::set-output name=digest::${DIGEST}}"
+
+    - name: Restore Docker image from cache
+      id: cache-docker
+      uses: actions/cache@v2
+      with:
+        path: ${{ inputs.cache-path }}
+        key: ${{ inputs.cache-key }}-${{ steps.get-digest.outputs.digest }}
+        restore-keys: ${{ inputs.cache-key }}-
+
+    - name: Pull latest Docker image
+      id: pull-image
+      run: |
+        docker pull ${{ inputs.image-name }}
+
+    - name: Save Docker image to cache
+      if: steps.cache-docker.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p ${{ inputs.cache-path }}
+        docker image save -o ${{ inputs.cache-path }}/${{ steps.get-digest.outputs.digest }}.tar ${{ inputs.image-name }}
+
+    - name: Run Docker container
+      run: docker run ${{ inputs.image-name }}
+
+    - name: Save cache
+      if: steps.cache-docker.outputs.cache-hit != 'true'
+      uses: actions/cache@v2
+      with:
+        path: ${{ inputs.cache-path }}
+        key: ${{ inputs.cache-key }}-${{ steps.get-digest.outputs.digest }}
+        restore-keys: ${{ inputs.cache-key }}-
+        expire: ${{ inputs.cache-duration }}
