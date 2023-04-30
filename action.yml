@@ -5,7 +5,7 @@ description: |
   It downloads the latest version of the Docker image and caches it for subsequent runs.
 
 inputs:
-  image-name:
+  docker-image:
     description: 'The name of the Docker image to cache'
     required: true
     default: 'docker-image'
@@ -13,10 +13,6 @@ inputs:
     description: 'The path to the directory where the Docker image should be cached'
     required: false
     default: 'ci/cache/docker'
-  cache-key:
-    description: 'The key used to identify the cached Docker image'
-    required: false
-    default: 'docker-image-${{ github.sha }}'
   cache-duration:
     description: 'The time period for which the cache should be kept'
     required: false
@@ -37,9 +33,10 @@ runs:
       id: get-digest
       shell: bash
       run: |
-        export DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.image-name }} | sed -E 's/^.*@//')
-        export IMAGE_NAME=$(docker image inspect --format='{{index .RepoTags 0}}' ${{ inputs.image-name }} | sed -E 's/^.*://')
-        echo "::set-output name=digest::$IMAGE_NAME@$DIGEST"
+        export DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.docker-image }} | sed -E 's/^.*@//')
+        export IMAGE_NAME=$(docker image inspect --format='{{index .RepoTags 0}}' ${{ inputs.docker-image }} | sed -E 's/^.*://')
+        echo "::set-output name=digest::@$DIGEST"
+        echo "::set-output name=image-name::$IMAGE_NAME"        
 
 
     - name: Restore Docker image from cache
@@ -47,31 +44,31 @@ runs:
       uses: actions/cache@v2
       with:
         path: ${{ inputs.cache-path }}
-        key: ${{ inputs.cache-key }}-${{ steps.get-digest.outputs.digest }}
-        restore-keys: ${{ inputs.cache-key }}-
+        key: ${{ steps.get-digest.outputs.image-name }}-${{ steps.get-digest.outputs.digest }}
+        restore-keys: ${{ steps.get-digest.outputs.image-name }}-
 
     - name: Pull latest Docker image
       id: pull-image
       shell: bash
       run: |
-        docker pull ${{ inputs.image-name }}
+        docker pull ${{ inputs.docker-image }}
 
     - name: Save Docker image to cache
       if: steps.cache-docker.outputs.cache-hit != 'true'
       shell: bash
       run: |
         mkdir -p ${{ inputs.cache-path }}
-        docker image save -o ${{ inputs.cache-path }}/${{ steps.get-digest.outputs.digest }}.tar ${{ inputs.image-name }}
+        docker image save -o ${{ inputs.cache-path }}/${{ steps.get-digest.outputs.digest }}.tar ${{ inputs.docker-image }}
 
-    - name: Run Docker container
-      shell: bash
-      run: docker run ${{ inputs.image-name }}
+#     - name: Run Docker container
+#       shell: bash
+#       run: docker run ${{ inputs.docker-image }}
 
     - name: Save cache
       if: steps.cache-docker.outputs.cache-hit != 'true'
       uses: actions/cache@v2
       with:
         path: ${{ inputs.cache-path }}
-        key: ${{ inputs.cache-key }}-${{ steps.get-digest.outputs.digest }}
-        restore-keys: ${{ inputs.cache-key }}-
+        key: ${{ steps.get-digest.outputs.image-name }}-${{ steps.get-digest.outputs.digest }}
+        restore-keys: ${{ steps.get-digest.outputs.image-name }}-
         expire: ${{ inputs.cache-duration }}
