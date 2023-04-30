@@ -35,6 +35,7 @@ runs:
       
     - name: Get Docker image digest
       id: get-digest
+      shell: bash
       run: |
         export DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.image-name }})
         echo "::set-output name=digest::${DIGEST}}"
@@ -49,16 +50,19 @@ runs:
 
     - name: Pull latest Docker image
       id: pull-image
+      shell: bash
       run: |
         docker pull ${{ inputs.image-name }}
 
     - name: Save Docker image to cache
       if: steps.cache-docker.outputs.cache-hit != 'true'
+      shell: bash
       run: |
         mkdir -p ${{ inputs.cache-path }}
         docker image save -o ${{ inputs.cache-path }}/${{ steps.get-digest.outputs.digest }}.tar ${{ inputs.image-name }}
 
     - name: Run Docker container
+      shell: bash
       run: docker run ${{ inputs.image-name }}
 
     - name: Save cache
