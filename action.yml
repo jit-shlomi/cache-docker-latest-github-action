@@ -37,8 +37,10 @@ runs:
       id: get-digest
       shell: bash
       run: |
-        export DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.image-name }})
-        echo "::set-output name=digest::${DIGEST}}"
+        export DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.image-name }} | sed -E 's/^.*@//')
+        export IMAGE_NAME=$(docker image inspect --format='{{index .RepoTags 0}}' ${{ inputs.image-name }} | sed -E 's/^.*://')
+        echo "::set-output name=digest::$IMAGE_NAME@$DIGEST"
+
 
     - name: Restore Docker image from cache
       id: cache-docker
