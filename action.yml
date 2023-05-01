@@ -39,6 +39,7 @@ runs:
       shell: bash
       run: |
         echo ${{ inputs.docker-image }}
+        docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.docker-image }}
         echo ${{ steps.get-digest.outputs.image-name }}
         echo ${{ steps.get-digest.outputs.digest }}
       
