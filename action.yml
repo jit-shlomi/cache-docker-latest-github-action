@@ -39,6 +39,9 @@ runs:
         export IMAGE_NAME_WITH_TAG=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $NF}')
         echo "digest=${DIGEST}" >> $GITHUB_ENV
         echo "image-name=${IMAGE_NAME_WITH_TAG}" >> $GITHUB_ENV
+        echo digest $DIGEST
+        echo "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}"
+        
 
     - name: Restore Docker image from cache
       id: cache-docker
