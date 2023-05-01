@@ -31,33 +31,14 @@ runs:
       env:
         DOCKER_IMAGE: ${{ inputs.docker-image }}
       run: |
-        export IMAGE_NAME=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $NF}' | awk -F: '{print $1}')
+        export IMAGE_NAME=$(echo "${DOCKER_IMAGE}" | awk -F: '{print $1}')
         export DOCKER_TAG=$(echo "${DOCKER_IMAGE}" | awk -F: '{print $2}')
         TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMAGE_NAME}:pull" | jq -r '.token')
         export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
         export IMAGE_NAME_WITH_TAG=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $NF}')
-        echo $DIGEST
-        curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMAGE_NAME}:pull" | jq -r '.token'
-        curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest'
-        TOKEN2=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:docker.io/shlomik/aws-batch-test:pull" | jq -r '.token')
-        curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN2" "https://registry-1.docker.io/v2/docker.io/shlomik/aws-batch-test/manifests/latest" | jq -r '.config.digest'
-        echo A "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMAGE_NAME}:pull"
-        echo B "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}"
-        echo $IMAGE_NAME_WITH_TAG
-        
         echo "DIGEST=${DIGEST}" >> $GITHUB_ENV
         echo "IMAGE_NAME_WITH_TAG=${IMAGE_NAME_WITH_TAG}" >> $GITHUB_ENV
 
-
-    
-    - name: Echo the keys
-      shell: bash
-      run: |
-        # docker manifest inspect ${{ inputs.docker-image }}
-        echo ${{ inputs.docker-image }}
-        echo ${{ steps.get-digest.outputs.image-name }}
-        echo ${{ steps.get-digest.outputs.digest }}
-      
     - name: Restore Docker image from cache
       id: cache-docker
       uses: actions/cache@v2
@@ -78,10 +59,6 @@ runs:
       run: |
         mkdir -p ${{ inputs.cache-path }}
         docker image save -o ${{ inputs.cache-path }}/${{ steps.get-digest.outputs.image-name }}@${{ steps.get-digest.outputs.digest }}.tar ${{ inputs.docker-image }}
-
-#     - name: Run Docker container
-#       shell: bash
-#       run: docker run ${{ inputs.docker-image }}
 
     - name: Save cache
       if: steps.cache-docker.outputs.cache-hit != 'true'
