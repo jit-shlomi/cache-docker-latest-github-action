@@ -37,6 +37,8 @@ runs:
         export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
         export IMAGE_NAME_WITH_TAG=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $NF}')
         echo $DIGEST
+        curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMAGE_NAME}:pull" | jq -r '.token'
+        curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest'
         echo $IMAGE_NAME_WITH_TAG
         echo "DIGEST=${DIGEST}" >> $GITHUB_ENV
         echo "IMAGE_NAME_WITH_TAG=${IMAGE_NAME_WITH_TAG}" >> $GITHUB_ENV
