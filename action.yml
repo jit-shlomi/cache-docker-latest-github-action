@@ -41,6 +41,8 @@ runs:
         curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest'
         TOKEN2=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:shlomik/aws-batch-test:pull" | jq -r '.token')
         curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN2" "https://registry-1.docker.io/v2/shlomik/aws-batch-test/manifests/latest" | jq -r '.config.digest'
+        echo A "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMAGE_NAME}:pull"
+        echo B "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}"
         echo $IMAGE_NAME_WITH_TAG
         
         echo "DIGEST=${DIGEST}" >> $GITHUB_ENV
