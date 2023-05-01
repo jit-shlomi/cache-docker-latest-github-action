@@ -34,7 +34,12 @@ runs:
         echo "::set-output name=digest::$DIGEST"
         echo "::set-output name=image-name::$IMAGE_NAME"        
 
-
+    
+    - name: Echo the keys
+      run: |
+        echo ${{ steps.get-digest.outputs.image-name }}
+        echo ${{ steps.get-digest.outputs.digest }}
+      
     - name: Restore Docker image from cache
       id: cache-docker
       uses: actions/cache@v2
