@@ -38,6 +38,7 @@ runs:
     - name: Echo the keys
       shell: bash
       run: |
+        echo ${{ inputs.docker-image }}
         echo ${{ steps.get-digest.outputs.image-name }}
         echo ${{ steps.get-digest.outputs.digest }}
       
