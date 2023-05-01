@@ -54,7 +54,7 @@ runs:
       shell: bash
       run: |
         mkdir -p ${{ inputs.cache-path }}
-        docker image save -o ${{ inputs.cache-path }}/${{ steps.get-digest.outputs.digest }}.tar ${{ inputs.docker-image }}
+        docker image save -o ${{ inputs.cache-path }}/${{ steps.get-digest.outputs.image-name }}@${{ steps.get-digest.outputs.digest }}.tar ${{ inputs.docker-image }}
 
 #     - name: Run Docker container
 #       shell: bash
