@@ -31,8 +31,8 @@ runs:
       run: |
         export IMAGE_NAME=$(echo "${{ inputs.docker-image }}" | awk -F/ '{print $NF}' | awk -F: '{print $1}')
         export DOCKER_TAG=$(echo "${{ inputs.docker-image }}" | awk -F: '{print $2}')
-        echo IMAGE_NAME $IMAGE_NAME
-        echo DOCKER_TAG $DOCKER_TAG
+        echo $IMAGE_NAME
+        echo $DOCKER_TAG
         TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMAGE_NAME}:pull" | jq -r '.token')
         export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
         export IMAGE_NAME_WITH_TAG=$(echo "${{ inputs.docker-image }}" | awk -F/ '{print $NF}')
