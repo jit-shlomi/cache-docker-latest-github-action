@@ -13,10 +13,6 @@ inputs:
     description: 'The path to the directory where the Docker image should be cached'
     required: false
     default: 'ci/cache/docker'
-  cache-duration:
-    description: 'The time period for which the cache should be kept'
-    required: false
-    default: '7 days'
 
 outputs:
   cache-hit:
@@ -71,4 +67,3 @@ runs:
         path: ${{ inputs.cache-path }}
         key: ${{ steps.get-digest.outputs.image-name }}@${{ steps.get-digest.outputs.digest }}
         restore-keys: ${{ steps.get-digest.outputs.image-name }}
-        expire: ${{ inputs.cache-duration }}
