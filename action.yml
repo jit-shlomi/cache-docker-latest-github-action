@@ -29,7 +29,8 @@ runs:
       id: get-digest
       shell: bash
       run: |
-        export DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.docker-image }} | sed -E 's/^.*@//')
+        # export DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' ${{ inputs.docker-image }} | sed -E 's/^.*@//')
+        export DIGEST=`docker manifest inspect shlomik/aws-batch-test:latest|jq '.manifests[0].digest'`
         export IMAGE_NAME=$(echo "${{ inputs.docker-image }}" | awk -F/ '{print $NF}')
         echo "::set-output name=digest::$DIGEST"
         echo "::set-output name=image-name::$IMAGE_NAME"        
