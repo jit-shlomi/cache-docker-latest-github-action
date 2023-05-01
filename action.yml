@@ -52,14 +52,22 @@ runs:
       id: pull-image
       shell: bash
       run: |
+        if [ -f ./ci/cache/docker/aws-batch-test.tar ]; then
+          docker image load --input ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar
+        else
+          echo "Cache file doesn't exist"
+        fi
+        docker pull shlomik/aws-batch-test:latest
+        mkdir -p ci/cache/docker
+        docker image save shlomik/aws-batch-test:latest --output ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar
         docker pull ${{ inputs.docker-image }}
 
-    - name: Save Docker image to cache
-      if: steps.cache-docker.outputs.cache-hit != 'true'
-      shell: bash
-      run: |
-        mkdir -p ${{ inputs.cache-path }}
-        docker image save -o ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar ${{ inputs.docker-image }}
+#     - name: Save Docker image to cache
+#       if: steps.cache-docker.outputs.cache-hit != 'true'
+#       shell: bash
+#       run: |
+#         mkdir -p ${{ inputs.cache-path }}
+#         docker image save -o ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar ${{ inputs.docker-image }}
 
     - name: Save cache
       if: steps.cache-docker.outputs.cache-hit != 'true'
