@@ -52,7 +52,7 @@ runs:
       id: pull-image
       shell: bash
       run: |
-        if [ -f ./ci/cache/docker/aws-batch-test.tar ]; then
+        if [ -f ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar ]; then
           docker image load --input ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar
         else
           echo "Cache file doesn't exist"
