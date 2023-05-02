@@ -57,10 +57,11 @@ runs:
         else
           echo "Cache file doesn't exist"
         fi
-        docker pull shlomik/aws-batch-test:latest
-        mkdir -p ci/cache/docker
-        docker image save shlomik/aws-batch-test:latest --output ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar
         docker pull ${{ inputs.docker-image }}
+        mkdir -p ${{ inputs.cache-path }}
+        rm -f ${{ inputs.cache-path }}/${{ env.image-name }}*
+        docker image save ${{ inputs.docker-image }} --output ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar
+
 
 #     - name: Save Docker image to cache
 #       if: steps.cache-docker.outputs.cache-hit != 'true'
