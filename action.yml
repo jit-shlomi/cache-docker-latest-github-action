@@ -59,7 +59,11 @@ runs:
         fi
         docker pull ${{ inputs.docker-image }}
         mkdir -p ${{ inputs.cache-path }}
+        echo ---2---
+        ls -l {{ inputs.cache-path }}/${{ env.image-name }}
         rm -f ${{ inputs.cache-path }}/${{ env.image-name }}*
+        echo ---2---
+        ls -l {{ inputs.cache-path }}/${{ env.image-name }}        
         docker image save ${{ inputs.docker-image }} --output ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar
 
 
