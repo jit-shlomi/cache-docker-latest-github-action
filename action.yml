@@ -54,7 +54,7 @@ runs:
         
     - name: Restore Docker image from cache
       id: cache-docker
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ${{ inputs.cache-path }}
         key: ${{ env.image-name }}@${{ env.digest }}
