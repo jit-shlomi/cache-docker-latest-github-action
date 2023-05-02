@@ -40,6 +40,12 @@ runs:
         echo "digest=${DIGEST}" >> $GITHUB_ENV
         echo "image-name=${IMAGE_NAME_WITH_TAG}" >> $GITHUB_ENV
 
+    - name: print cache1
+      id: print-cache1
+      shell: bash
+      run: |
+        ls -la ${{ inputs.cache-path }}
+        
     - name: Restore Docker image from cache
       id: cache-docker
       uses: actions/cache@v2
@@ -47,6 +53,12 @@ runs:
         path: ${{ inputs.cache-path }}
         key: ${{ env.image-name }}@${{ env.digest }}
         restore-keys: ${{ env.image-name }}
+        
+    - name: print cache2
+      id: print-cache2
+      shell: bash
+      run: |
+        ls -la ${{ inputs.cache-path }}
 
     - name: Pull latest Docker image
       id: pull-image
