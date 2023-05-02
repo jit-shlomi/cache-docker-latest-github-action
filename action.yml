@@ -104,4 +104,3 @@ runs:
         path: ${{ inputs.cache-path }}
         key: ${{ env.image-name }}@${{ env.digest }}
         restore-keys: ${{ env.image-name }}
-        delete: true
