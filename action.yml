@@ -105,10 +105,10 @@ runs:
 #         mkdir -p ${{ inputs.cache-path }}
 #         docker image save -o ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar ${{ inputs.docker-image }}
 
-    - name: Save cache
-      if: steps.cache-docker.outputs.cache-hit != 'true'
-      uses: actions/cache@v2
-      with:
-        path: ${{ inputs.cache-path }}
-        key: ${{ env.image-name }}@${{ env.digest }}
-        restore-keys: ${{ env.image-name }}
+#     - name: Save cache
+#       if: steps.cache-docker.outputs.cache-hit != 'true'
+#       uses: actions/cache@v2
+#       with:
+#         path: ${{ inputs.cache-path }}
+#         key: ${{ env.image-name }}@${{ env.digest }}
+#        restore-keys: ${{ env.image-name }}
