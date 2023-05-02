@@ -82,12 +82,20 @@ runs:
         fi
         docker pull ${{ inputs.docker-image }}
         mkdir -p ${{ inputs.cache-path }}
-        echo ---2---
+        echo ---1---
         ls -l ${{ inputs.cache-path }}/
         rm -f ${{ inputs.cache-path }}/${{ env.image-name }}*
         echo ---2---
         ls -l ${{ inputs.cache-path }}/
         docker image save ${{ inputs.docker-image }} --output ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar
+        
+    - name: ls dir again
+      id: ls-dir
+      shell: bash
+      run: |
+        echo ---3---
+        ls -l ${{ inputs.cache-path }}/
+        echo ---4---
 
 
 #     - name: Save Docker image to cache
