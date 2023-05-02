@@ -44,7 +44,13 @@ runs:
       id: print-cache1
       shell: bash
       run: |
-        ls -la ${{ inputs.cache-path }}
+        if [ -d ${{ inputs.cache-path }} ]; then
+          echo ------cache------
+          ls -la ${{ inputs.cache-path }}
+        else
+          echo "Cache file doesn't exist yet"
+        fi
+        
         
     - name: Restore Docker image from cache
       id: cache-docker
@@ -58,7 +64,12 @@ runs:
       id: print-cache2
       shell: bash
       run: |
-        ls -la ${{ inputs.cache-path }}
+        if [ -d ${{ inputs.cache-path }} ]; then
+          echo ------cache2------
+          ls -la ${{ inputs.cache-path }}
+        else
+          echo "Cache file doesn't exist yet"
+        fi
 
     - name: Pull latest Docker image
       id: pull-image
