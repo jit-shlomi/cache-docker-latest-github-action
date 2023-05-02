@@ -75,8 +75,8 @@ runs:
       id: pull-image
       shell: bash
       run: |
-        if [ -f ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar ]; then
-          docker image load --input ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar
+        if [ -f ${{ inputs.cache-path }}/${{ env.image-name }}.tar ]; then
+          docker image load --input ${{ inputs.cache-path }}/${{ env.image-name }}.tar
         else
           echo "Cache file doesn't exist"
         fi
