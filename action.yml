@@ -54,6 +54,9 @@ runs:
         if [ "${REGISTRY}" = "ghcr.io" ]; then
           echo ========
           export DIGEST=$(docker manifest inspect ${{ inputs.docker-image }} | jq '.manifests[0].digest' | cut -d'"' -f2)
+          if [ -z "$DIGEST" ]; then
+            export DIGEST=$(docker manifest inspect ${{ inputs.docker-image }} | jq '.config.digest' | cut -d'"' -f2)
+          fi
           echo $DIGEST
           echo ========
           ## For GitHub Container Registry (ghcr.io), use the GitHub API token for authentication
