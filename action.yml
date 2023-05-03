@@ -31,12 +31,46 @@ runs:
       env:
         DOCKER_IMAGE: ${{ inputs.docker-image }}
       run: |
-        echo -------ls---------
-        ls -la 
-        chmod +x ./get_image_digest.sh
-        source ./get_image_digest.sh "${{ inputs.docker-image }}"
+        # Extract the registry, image name, and tag from the Docker image string
+        # Examples: "ghcr.io/jitsecurity-controls/control-gitleaks-alpine:tag"
+        #           "121169888995.dkr.ecr.us-east-1.amazonaws.com/control-legitify-alpine:latest"
+        #           "shlomik/aws-batch-test:latest"
+        #           "shlomik/aws-batch-test"
+        export REGISTRY=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $1}')
+        export IMAGE_NAME_WITH_TAG=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $NF}')
+        export IMAGE_NAME=$(echo "${IMAGE_NAME_WITH_TAG}" | awk -F: '{print $1}')
+        export DOCKER_TAG=$(echo "${IMAGE_NAME_WITH_TAG}" | awk -F: '{print $2}')
+        if [ -z "${DOCKER_TAG}" ]; then DOCKER_TAG="latest"; fi
+        
+        # Get the Docker image digest from the registry API
+        if [ "${REGISTRY}" = "ghcr.io" ]; then
+          # For GitHub Container Registry (ghcr.io), use the GitHub API token for authentication
+          TOKEN=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://ghcr.io/auth/token" | jq -r '.token')
+          export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://ghcr.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
+        elif [[ "${REGISTRY}" =~ .*\.dkr\.ecr\..*\.amazonaws\.com ]]; then
+          # For Amazon Elastic Container Registry (ECR), use the AWS CLI to get a temporary token for authentication
+          export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+          export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          export AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}"
+          export AWS_ACCOUNT_ID=$(echo "${REGISTRY}" | cut -d'.' -f1)
+          export TOKEN=$(aws ecr get-login-password | docker login --username AWS --password-stdin "${REGISTRY}")
+          export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://${REGISTRY}/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
+        else
+          # For other registries (e.g., Docker Hub), use anonymous authentication
+          export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
+        fi
+        
+        # Set the environment variables for the digest and image name with tag
+        export IMAGE_NAME_WITH_TAG="${IMAGE_NAME}:${DOCKER_TAG}"
         echo "digest=${DIGEST}" >> $GITHUB_ENV
         echo "image-name=${IMAGE_NAME_WITH_TAG}" >> $GITHUB_ENV
+#       run: |
+#         echo -------ls---------
+#         ls -la 
+#         chmod +x ./get_image_digest.sh
+#         source ./get_image_digest.sh "${{ inputs.docker-image }}"
+#         echo "digest=${DIGEST}" >> $GITHUB_ENV
+#         echo "image-name=${IMAGE_NAME_WITH_TAG}" >> $GITHUB_ENV
 
     - name: print cache1
       id: print-cache1
