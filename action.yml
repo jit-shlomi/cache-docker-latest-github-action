@@ -31,6 +31,8 @@ runs:
       env:
         DOCKER_IMAGE: ${{ inputs.docker-image }}
       run: |
+        echo -------ls---------
+        ls -la 
         chmod +x ./get_image_digest.sh
         source ./get_image_digest.sh "${{ inputs.docker-image }}"
         echo "digest=${DIGEST}" >> $GITHUB_ENV
