@@ -31,12 +31,8 @@ runs:
       env:
         DOCKER_IMAGE: ${{ inputs.docker-image }}
       run: |
-        export IMAGE_NAME=$(echo "${DOCKER_IMAGE}" | awk -F: '{print $1}')
-        export DOCKER_TAG=$(echo "${DOCKER_IMAGE}" | awk -F: '{print $2}')
-        
-        TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMAGE_NAME}:pull" | jq -r '.token')
-        export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://registry-1.docker.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
-        export IMAGE_NAME_WITH_TAG=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $NF}')
+        chmod +x ./get_image_digest.sh
+        source ./get_image_digest.sh "${{ inputs.docker-image }}"
         echo "digest=${DIGEST}" >> $GITHUB_ENV
         echo "image-name=${IMAGE_NAME_WITH_TAG}" >> $GITHUB_ENV
 
