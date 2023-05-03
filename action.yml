@@ -53,11 +53,11 @@ runs:
         # Get the Docker image digest from the registry API
         if [ "${REGISTRY}" = "ghcr.io" ]; then
           echo ========
-          docker manifest inspect ghcr.io/jit-shlomi/aws-batch-test:latest | jq '.manifests[0].digest' | cut -d'"' -f2
+          export DIGEST=docker manifest inspect ghcr.io/jit-shlomi/aws-batch-test:latest | jq '.manifests[0].digest' | cut -d'"' -f2
           echo ========
-          # For GitHub Container Registry (ghcr.io), use the GitHub API token for authentication
-          TOKEN=$(curl -s -H "Authorization: Bearer ${{ inputs.docker-password }}" "https://ghcr.io/auth/token" | jq -r '.token')
-          export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://ghcr.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
+          ## For GitHub Container Registry (ghcr.io), use the GitHub API token for authentication
+          # TOKEN=$(curl -s -H "Authorization: Bearer ${{ inputs.docker-password }}" "https://ghcr.io/auth/token" | jq -r '.token')
+          # export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://ghcr.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
         elif [[ "${REGISTRY}" =~ .*\.dkr\.ecr\..*\.amazonaws\.com ]]; then
           # For Amazon Elastic Container Registry (ECR), use the AWS CLI to get a temporary token for authentication
           # export AWS_ACCESS_KEY_ID="${{ inputs.docker-user }}"
