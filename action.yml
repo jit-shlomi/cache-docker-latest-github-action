@@ -72,7 +72,6 @@ runs:
         path: ${{ inputs.cache-path }}
         key: ${{ env.image-name }}@${{ env.digest }}
         restore-keys: ${{ env.image-name }}
-      continue-on-error: true
 
     - name: Pull latest Docker image
       id: pull-image
