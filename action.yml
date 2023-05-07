@@ -30,9 +30,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-#     - name: Checkout repository
-#       uses: actions/checkout@v2
-      
     - name: Get Docker image digest
       id: get-digest
       shell: bash
@@ -40,10 +37,6 @@ runs:
         DOCKER_IMAGE: ${{ inputs.docker-image }}
       run: |
         # Extract the registry, image name, and tag from the Docker image string
-        # Examples: "ghcr.io/jitsecurity-controls/control-gitleaks-alpine:tag"
-        #           "121169888995.dkr.ecr.us-east-1.amazonaws.com/control-legitify-alpine:latest"
-        #           "shlomik/aws-batch-test:latest"
-        #           "shlomik/aws-batch-test"
         export REGISTRY=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $1}')
         export IMAGE_NAME_WITH_TAG=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $NF}')
         export IMAGE_NAME=$(echo "${IMAGE_NAME_WITH_TAG}" | awk -F: '{print $1}')
@@ -57,14 +50,7 @@ runs:
           if [ "$DIGEST" = "null" ] || [ -z "$DIGEST" ]; then
             export DIGEST=$(docker manifest inspect ${{ inputs.docker-image }} | jq '.config.digest' | cut -d'"' -f2)
           fi
-          echo $DIGEST
-          echo ========
-          ## For GitHub Container Registry (ghcr.io), use the GitHub API token for authentication
-          # TOKEN=$(curl -s -H "Authorization: Bearer ${{ inputs.docker-password }}" "https://ghcr.io/auth/token" | jq -r '.token')
-          # export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://ghcr.io/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
         elif [[ "${REGISTRY}" =~ .*\.dkr\.ecr\..*\.amazonaws\.com ]]; then
-          # For Amazon Elastic Container Registry (ECR), use the AWS CLI to get a temporary token for authentication
-          # export AWS_ACCESS_KEY_ID="${{ inputs.docker-user }}"
           export AWS_SECRET_ACCESS_KEY="${{ inputs.docker-password }}"
           export AWS_ACCOUNT_ID=$(echo "${REGISTRY}" | cut -d'.' -f1)
           export TOKEN=$(aws ecr get-login-password | docker login --username AWS --password-stdin "${REGISTRY}")
@@ -79,18 +65,6 @@ runs:
         echo "digest=${DIGEST}" >> $GITHUB_ENV
         echo "image-name=${IMAGE_NAME_WITH_TAG}" >> $GITHUB_ENV
 
-    - name: print cache1
-      id: print-cache1
-      shell: bash
-      run: |
-        if [ -d ${{ inputs.cache-path }} ]; then
-          echo ------cache------
-          ls -la ${{ inputs.cache-path }}
-        else
-          echo "Cache file doesn't exist yet"
-        fi
-        
-        
     - name: Restore Docker image from cache
       id: cache-docker
       uses: actions/cache@v3
@@ -98,17 +72,6 @@ runs:
         path: ${{ inputs.cache-path }}
         key: ${{ env.image-name }}@${{ env.digest }}
         restore-keys: ${{ env.image-name }}
-        
-    - name: print cache2
-      id: print-cache2
-      shell: bash
-      run: |
-        if [ -d ${{ inputs.cache-path }} ]; then
-          echo ------cache2------
-          ls -la ${{ inputs.cache-path }}
-        else
-          echo "Cache file doesn't exist yet"
-        fi
 
     - name: Pull latest Docker image
       id: pull-image
@@ -121,33 +84,4 @@ runs:
         fi
         docker pull ${{ inputs.docker-image }}
         mkdir -p ${{ inputs.cache-path }}
-        echo ---1---
-        ls -l ${{ inputs.cache-path }}/
-        rm -f ${{ inputs.cache-path }}/${{ env.image-name }}*
-        echo ---2---
-        ls -l ${{ inputs.cache-path }}/
         docker image save ${{ inputs.docker-image }} --output ${{ inputs.cache-path }}/${{ env.image-name }}.tar
-        
-    - name: ls dir again
-      id: ls-dir
-      shell: bash
-      run: |
-        echo ---3---
-        ls -l ${{ inputs.cache-path }}/
-        echo ---4---
-
-
-#     - name: Save Docker image to cache
-#       if: steps.cache-docker.outputs.cache-hit != 'true'
-#       shell: bash
-#       run: |
-#         mkdir -p ${{ inputs.cache-path }}
-#         docker image save -o ${{ inputs.cache-path }}/${{ env.image-name }}@${{ env.digest }}.tar ${{ inputs.docker-image }}
-
-#     - name: Save cache
-#       if: steps.cache-docker.outputs.cache-hit != 'true'
-#       uses: actions/cache@v2
-#       with:
-#         path: ${{ inputs.cache-path }}
-#         key: ${{ env.image-name }}@${{ env.digest }}
-#        restore-keys: ${{ env.image-name }}
