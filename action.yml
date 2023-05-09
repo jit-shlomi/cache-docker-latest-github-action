@@ -10,7 +10,7 @@ inputs:
     required: true
     default: 'docker-image'
   docker-password:
-    description: 'The docker registry password'
+    description: 'The docker registry password. Used to pull the docker manifest'
     required: false
     default: ''
   cache-path:
@@ -30,6 +30,7 @@ runs:
         # Extract the registry, image name, and tag from the Docker image string
         export REGISTRY=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $1}')
         export IMAGE_NAME_WITH_TAG=$(echo "${DOCKER_IMAGE}" | awk -F/ '{print $NF}')
+        export IMAGE_NAME_WITH_REPOSITORY=$(echo "${DOCKER_IMAGE}" | awk -F: '{print $1}')
         export IMAGE_NAME=$(echo "${IMAGE_NAME_WITH_TAG}" | awk -F: '{print $1}')
         export DOCKER_TAG=$(echo "${IMAGE_NAME_WITH_TAG}" | awk -F: '{print $2}')
         if [ -z "${DOCKER_TAG}" ]; then DOCKER_TAG="latest"; fi
@@ -48,7 +49,6 @@ runs:
           export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://${REGISTRY}/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
         else
           # For other registries (e.g., Docker Hub), use anonymous authentication
-          export IMAGE_NAME_WITH_REPOSITORY=$(echo "${DOCKER_IMAGE}" | awk -F: '{print $1}')
           TOKEN=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${IMAGE_NAME_WITH_REPOSITORY}:pull" | jq -r '.token')
           export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://registry-1.docker.io/v2/${IMAGE_NAME_WITH_REPOSITORY}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
         fi
