@@ -9,10 +9,6 @@ inputs:
     description: 'The name of the Docker image to cache'
     required: true
     default: 'docker-image'
-  docker-user:
-    description: 'The docker registry user'
-    required: false
-    default: ''
   docker-password:
     description: 'The docker registry password'
     required: false
@@ -21,11 +17,6 @@ inputs:
     description: 'The path to the directory where the Docker image should be cached'
     required: false
     default: 'ci/cache/docker'
-
-outputs:
-  cache-hit:
-    description: 'Whether the Docker image was restored from the cache'
-    value: ${{ steps.cache-docker.outputs.cache-hit }}
 
 runs:
   using: "composite"
@@ -45,14 +36,14 @@ runs:
         
         # Get the Docker image digest from the registry API
         if [ "${REGISTRY}" = "ghcr.io" ]; then
-          echo ========
+          # try to get the digest of the image in the registry
           export DIGEST=$(docker manifest inspect ${{ inputs.docker-image }} | jq '.manifests[0].digest' | cut -d'"' -f2)
           if [ "$DIGEST" = "null" ] || [ -z "$DIGEST" ]; then
+            # have a fallback for extracting the digest
             export DIGEST=$(docker manifest inspect ${{ inputs.docker-image }} | jq '.config.digest' | cut -d'"' -f2)
           fi
         elif [[ "${REGISTRY}" =~ .*\.dkr\.ecr\..*\.amazonaws\.com ]]; then
           export AWS_SECRET_ACCESS_KEY="${{ inputs.docker-password }}"
-          export AWS_ACCOUNT_ID=$(echo "${REGISTRY}" | cut -d'.' -f1)
           export TOKEN=$(aws ecr get-login-password | docker login --username AWS --password-stdin "${REGISTRY}")
           export DIGEST=$(curl -s -H "Accept: application/vnd.docker.distribution.manifest.v2+json" -H "Authorization: Bearer $TOKEN" "https://${REGISTRY}/v2/${IMAGE_NAME}/manifests/${DOCKER_TAG}" | jq -r '.config.digest')
         else
@@ -61,27 +52,26 @@ runs:
         fi
         
         # Set the environment variables for the digest and image name with tag
-        export IMAGE_NAME_WITH_TAG="${IMAGE_NAME}:${DOCKER_TAG}"
         echo "digest=${DIGEST}" >> $GITHUB_ENV
-        echo "image-name=${IMAGE_NAME_WITH_TAG}" >> $GITHUB_ENV
+        echo "cache-key=${IMAGE_NAME_WITH_TAG}" >> $GITHUB_ENV
 
     - name: Restore Docker image from cache
       id: cache-docker
       uses: actions/cache@v3
       with:
         path: ${{ inputs.cache-path }}
-        key: ${{ env.image-name }}@${{ env.digest }}
-        restore-keys: ${{ env.image-name }}
+        key: ${{ env.cache-key }}@${{ env.digest }}
+        restore-keys: ${{ env.cache-key }}
 
     - name: Pull latest Docker image
       id: pull-image
       shell: bash
       run: |
-        if [ -f ${{ inputs.cache-path }}/${{ env.image-name }}.tar ]; then
-          docker image load --input ${{ inputs.cache-path }}/${{ env.image-name }}.tar
+        if [ -f ${{ inputs.cache-path }}/${{ env.cache-key }}.tar ]; then
+          docker image load --input ${{ inputs.cache-path }}/${{ env.cache-key }}.tar
         else
           echo "Cache file doesn't exist"
         fi
         docker pull ${{ inputs.docker-image }}
         mkdir -p ${{ inputs.cache-path }}
-        docker image save ${{ inputs.docker-image }} --output ${{ inputs.cache-path }}/${{ env.image-name }}.tar
+        docker image save ${{ inputs.docker-image }} --output ${{ inputs.cache-path }}/${{ env.cache-key }}.tar
